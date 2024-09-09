@@ -1,0 +1,119 @@
+-- Create the Library Database
+PRAGMA foreign_keys = ON;
+
+-- ===================== TABLE CREATION ===================== --
+
+-- Create Publisher Table
+CREATE TABLE IF NOT EXISTS Publisher (
+    PublisherID INTEGER PRIMARY KEY AUTOINCREMENT,
+    PublisherName VARCHAR(150) NOT NULL UNIQUE,
+    Address VARCHAR(250) NOT NULL,
+    Phone VARCHAR(20) NOT NULL
+);
+
+-- Create Book Table
+CREATE TABLE IF NOT EXISTS Book (
+    BookID INTEGER PRIMARY KEY AUTOINCREMENT,
+    Title VARCHAR(150) NOT NULL,
+    PublisherID INTEGER,
+    FOREIGN KEY (PublisherID) REFERENCES Publisher(PublisherID) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+-- Create LibraryBranch Table
+CREATE TABLE IF NOT EXISTS LibraryBranch (
+    BranchID INTEGER PRIMARY KEY AUTOINCREMENT,
+    BranchName VARCHAR(150) NOT NULL,
+    BranchLocation VARCHAR(250) NOT NULL
+);
+
+-- Create Borrower Table
+CREATE TABLE IF NOT EXISTS Borrower (
+    BorrowerID INTEGER PRIMARY KEY AUTOINCREMENT,
+    Name VARCHAR(150) NOT NULL,
+    Address VARCHAR(250) NOT NULL,
+    Phone VARCHAR(20) NOT NULL
+);
+
+-- Create BookLoan Table
+CREATE TABLE IF NOT EXISTS BookLoan (
+    LoanID INTEGER PRIMARY KEY AUTOINCREMENT,
+    BookID INTEGER,
+    BranchID INTEGER,
+    BorrowerID INTEGER,
+    DateIssued DATE NOT NULL DEFAULT CURRENT_DATE,
+    DueDate DATE NOT NULL DEFAULT (DATE('now', '+30 days')),
+    FOREIGN KEY (BookID) REFERENCES Book(BookID) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (BranchID) REFERENCES LibraryBranch(BranchID) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (BorrowerID) REFERENCES Borrower(BorrowerID) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+-- Create BookCopies Table
+CREATE TABLE IF NOT EXISTS BookCopies (
+    CopyID INTEGER PRIMARY KEY AUTOINCREMENT,
+    BookID INTEGER,
+    BranchID INTEGER,
+    NoOfCopies INTEGER NOT NULL,
+    FOREIGN KEY (BookID) REFERENCES Book(BookID) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (BranchID) REFERENCES LibraryBranch(BranchID) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+-- Create BookAuthor Table
+CREATE TABLE IF NOT EXISTS BookAuthor (
+    AuthorID INTEGER PRIMARY KEY AUTOINCREMENT,
+    BookID INTEGER,
+    AuthorName VARCHAR(150) NOT NULL,
+    FOREIGN KEY (BookID) REFERENCES Book(BookID) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+-- ===================== DATA INSERTION ===================== --
+
+-- Insert data into Publisher Table
+INSERT INTO Publisher (PublisherName, Address, Phone) VALUES
+    ('Penguin Books', '123 Publishing Ave, NY', '555-123-456'),
+    ('HarperCollins', '456 Library Blvd, LA', '555-789-012');
+
+-- Insert data into Book Table
+INSERT INTO Book (Title, PublisherID) VALUES
+    ('1984', 1),
+    ('Brave New World', 2);
+
+-- Insert data into LibraryBranch Table
+INSERT INTO LibraryBranch (BranchName, BranchLocation) VALUES
+    ('Downtown Library', '123 Main St, NY'),
+    ('Westside Library', '456 West St, LA');
+
+-- Insert data into Borrower Table
+INSERT INTO Borrower (Name, Address, Phone) VALUES
+    ('John Doe', '789 Park Ave, NY', '555-456-789'),
+    ('Jane Doe', '123 Oak St, LA', '555-987-654');
+
+-- Insert data into BookLoan Table
+INSERT INTO BookLoan (BookID, BranchID, BorrowerID) VALUES
+    (1, 1, 1),
+    (2, 2, 2);
+
+-- Insert data into BookCopies Table
+INSERT INTO BookCopies (BookID, BranchID, NoOfCopies) VALUES
+    (1, 1, 5),
+    (2, 2, 3);
+
+-- Insert data into BookAuthor Table
+INSERT INTO BookAuthor (BookID, AuthorName) VALUES
+    (1, 'George Orwell'),
+    (2, 'Aldous Huxley');
+
+-- ===================== QUERIES ===================== --
+
+-- Query 1: How many copies of a specific book are available in a certain branch?
+SELECT lb.BranchName, bc.NoOfCopies, b.Title
+FROM BookCopies bc
+INNER JOIN Book b ON bc.BookID = b.BookID
+INNER JOIN LibraryBranch lb ON bc.BranchID = lb.BranchID
+WHERE b.Title = '1984' AND lb.BranchName = 'Downtown Library';
+
+-- Query 2: How many copies of a specific book are available across all branches?
+SELECT lb.BranchName, bc.NoOfCopies, b.Title
+FROM BookCopies bc
+INNER JOIN Book b ON bc.BookID = b.BookID
+INNER JOIN LibraryBranch lb ON bc.BranchID = lb.BranchID
+WHERE b.Title = '1984';
