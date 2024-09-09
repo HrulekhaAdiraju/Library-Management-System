@@ -68,39 +68,57 @@ CREATE TABLE IF NOT EXISTS BookAuthor (
 -- ===================== DATA INSERTION ===================== --
 
 -- Insert data into Publisher Table
+DELETE FROM Publisher WHERE PublisherName IN ('Penguin Books', 'HarperCollins');
+
 INSERT INTO Publisher (PublisherName, Address, Phone) VALUES
     ('Penguin Books', '123 Publishing Ave, NY', '555-123-456'),
     ('HarperCollins', '456 Library Blvd, LA', '555-789-012');
 
--- Insert data into Book Table
-INSERT INTO Book (Title, PublisherID) VALUES
-    ('1984', 1),
-    ('Brave New World', 2);
-
 -- Insert data into LibraryBranch Table
+DELETE FROM LibraryBranch WHERE BranchName IN ('Downtown Library', 'Westside Library');
+
 INSERT INTO LibraryBranch (BranchName, BranchLocation) VALUES
     ('Downtown Library', '123 Main St, NY'),
     ('Westside Library', '456 West St, LA');
 
+-- Insert data into Book Table
+-- Ensure valid PublisherID exists
+DELETE FROM Book WHERE Title IN ('1984', 'Brave New World');
+
+INSERT INTO Book (Title, PublisherID) VALUES
+    ('1984', (SELECT PublisherID FROM Publisher WHERE PublisherName = 'Penguin Books')),
+    ('Brave New World', (SELECT PublisherID FROM Publisher WHERE PublisherName = 'HarperCollins'));
+
 -- Insert data into Borrower Table
+DELETE FROM Borrower WHERE Name IN ('John Doe', 'Jane Doe');
+
 INSERT INTO Borrower (Name, Address, Phone) VALUES
     ('John Doe', '789 Park Ave, NY', '555-456-789'),
     ('Jane Doe', '123 Oak St, LA', '555-987-654');
 
--- Insert data into BookLoan Table
-INSERT INTO BookLoan (BookID, BranchID, BorrowerID) VALUES
-    (1, 1, 1),
-    (2, 2, 2);
-
 -- Insert data into BookCopies Table
+-- Ensure valid BookID and BranchID exist
+DELETE FROM BookCopies WHERE BookID IN (1, 2) AND BranchID IN (1, 2);
+
 INSERT INTO BookCopies (BookID, BranchID, NoOfCopies) VALUES
-    (1, 1, 5),
-    (2, 2, 3);
+    ((SELECT BookID FROM Book WHERE Title = '1984'), (SELECT BranchID FROM LibraryBranch WHERE BranchName = 'Downtown Library'), 5),
+    ((SELECT BookID FROM Book WHERE Title = 'Brave New World'), (SELECT BranchID FROM LibraryBranch WHERE BranchName = 'Westside Library'), 3);
+
+-- Insert data into BookLoan Table
+-- Ensure valid BookID, BranchID, and BorrowerID exist
+DELETE FROM BookLoan WHERE BookID IN (1, 2) AND BranchID IN (1, 2) AND BorrowerID IN (1, 2);
+
+INSERT INTO BookLoan (BookID, BranchID, BorrowerID) VALUES
+    ((SELECT BookID FROM Book WHERE Title = '1984'), (SELECT BranchID FROM LibraryBranch WHERE BranchName = 'Downtown Library'), (SELECT BorrowerID FROM Borrower WHERE Name = 'John Doe')),
+    ((SELECT BookID FROM Book WHERE Title = 'Brave New World'), (SELECT BranchID FROM LibraryBranch WHERE BranchName = 'Westside Library'), (SELECT BorrowerID FROM Borrower WHERE Name = 'Jane Doe'));
 
 -- Insert data into BookAuthor Table
+-- Ensure valid BookID exists
+DELETE FROM BookAuthor WHERE BookID IN (1, 2);
+
 INSERT INTO BookAuthor (BookID, AuthorName) VALUES
-    (1, 'George Orwell'),
-    (2, 'Aldous Huxley');
+    ((SELECT BookID FROM Book WHERE Title = '1984'), 'George Orwell'),
+    ((SELECT BookID FROM Book WHERE Title = 'Brave New World'), 'Aldous Huxley');
 
 -- ===================== QUERIES ===================== --
 
